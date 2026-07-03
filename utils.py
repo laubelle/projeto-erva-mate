@@ -9,35 +9,35 @@ import copy
 DESCRICOES = {
     # Planilha 1: Fenóis
     "Trat_Meses": "Tempo de tratamento/armazenamento da erva-mate",
-    "Average_caffeine": "Teor medio de cafeina, principal metilxantina estimulante da erva-mate",
-    "Average_theobromine": "Teor medio de teobromina, metilxantina que contribui para o amargor",
-    "Average_catechin": "Teor medio de catequina, flavonoide com atividade antioxidante",
-    "Average_chlorogenic_acid": "Teor medio de acido clorogenico, principal acido fenolico da erva-mate",
-    "Average_caffeic_acid": "Teor medio de acido cafeico, derivado da degradacao do acido clorogenico",
+    "Average_caffeine": "Teor medio de cafeina",
+    "Average_theobromine": "Teor medio de teobromina",
+    "Average_catechin": "Teor medio de catequina",
+    "Average_chlorogenic_acid": "Teor medio de acido clorogenico",
+    "Average_caffeic_acid": "Teor medio de acido cafeico",
 
     # Planilha 2: Analise Sensorial
-    "Green_color": "Categoria visual de coloracao esverdeada, associada a presenca de clorofila",
-    "Gold_color": "Categoria visual de coloracao dourada/amarelada, associada a degradacao da clorofila durante o envelhecimento",
+    "Green_color": "Categoria visual de coloracao esverdeada.",
+    "Gold_color": "Categoria visual de coloracao dourada/amarelada.",
     "Fresh_green_odor": "Odor de folha fresca/recem-colhida",
     "Green_aroma": "Aroma vegetal, de folha crua, semelhante ao cheiro de mato",
     "Sweet_aroma": "Nota aromatica adocicada, associada a substancias doces",
     "Bitter_aroma": "Percepcao associada ao amargor",
-    "Straw_odor": "Cheiro de palha, aromatico seco e ligeiramente empoeirado, lembrando caules de graos secos",
+    "Straw_odor": "Cheiro de palha, aromatico seco e ligeiramente empoeirado",
     "Straw_aroma": "Sabor de palha percebido em boca/retro-olfacao",
-    "Astringency": "Sensacao de ressecamento e enrugamento na lingua, ligada a taninos e compostos fenolicos",
+    "Astringency": "Sensacao de ressecamento e enrugamento na lingua",
 
     # Planilha 3: Umidade e Atividade de Agua
     "Moisture_content": "Teor de umidade da erva-mate",
-    "Aw": "Atividade de agua, mede a agua disponivel para reacoes quimicas e crescimento microbiano",
+    "Aw": "Atividade de agua, mede a agua disponivel para reacoes quimicas",
 
     # Planilha 4: Cor
     "L": "Luminosidade (L*), indica a claridade ou escuridao da bebida",
-    "a": "Coordenada a*, vermelho vs. verde. Valores positivos indicam maior vermelhidao, negativos maior presenca de verde",
-    "b": "Coordenada b*, amarelo vs. azul. Valores positivos indicam amarelamento, negativos tonalidade azulada",
+    "a": "Coordenada a*, vermelho vs. verde.",
+    "b": "Coordenada b*, amarelo vs. azul.",
     "C": "Chroma (C*), saturacao da cor. Quanto maior, mais viva e intensa a coloracao",
-    "D": "De-greening (D*), perda de coloracao verde, associada a degradacao da clorofila ao longo do armazenamento",
-    "YI": "Yellowing Index, indice de amarelamento, tende a aumentar conforme a bebida envelhece",
-    "DeltaE": "Delta E, diferenca total de cor em relacao a uma referencia. Quanto maior, mais a cor se afastou do estado original",
+    "D": "De-greening (D*), perda de coloracao verde",
+    "YI": "Yellowing Index, indice de amarelamento",
+    "DeltaE": "Delta E, diferenca total de cor em relacao a uma referencia"
 }
 
 
@@ -60,7 +60,7 @@ def interpretar_correlacao(r: float) -> str:
 
 
 def plot_correlation_heatmap(df, colunas=None, titulo="Matriz de Correlacao de Pearson",
-                               largura=600, altura=600, color_continuous_scale="Geyser"):
+                               largura=600, altura=600, color_continuous_scale="RdBu_r"):
 
     if colunas is None:
         colunas = [c for c in df.columns if c in DESCRICOES]
@@ -90,9 +90,10 @@ def plot_correlation_heatmap(df, colunas=None, titulo="Matriz de Correlacao de P
     fig.update_traces(
         customdata=customdata,
         hovertemplate=(
-            "<b>%{x}</b><br>%{customdata[0]}<br><br>"
-            "<b>%{y}</b><br>%{customdata[1]}<br><br>"
-            "<b>r = %{z:.2f}</b><br>%{customdata[2]}"
+            "<b>%{x}</b> × <b>%{y}</b><br>"
+            "<span style='font-size:11px'>%{customdata[0]}</span><br>"
+            "<span style='font-size:11px'>%{customdata[1]}</span><br><br>"
+            "r = %{z:.2f} — %{customdata[2]}"
             "<extra></extra>"
         ),
     )
@@ -105,14 +106,40 @@ def plot_correlation_heatmap(df, colunas=None, titulo="Matriz de Correlacao de P
     return fig
 
 
-def aplicar_estilo_sobrio(fig):
-    """
-    Recebe uma figura Plotly (ja gerada) e retorna uma COPIA com estilo
-    visual mais sobrio, adequado para publicacao em artigo cientifico:
-    fonte serifada, fundo branco, paleta de cor mais neutra, bordas finas.
+def plot_regressao(df, x, y, titulo=None, cor_pontos="#1f77b4"):
+    if titulo is None:
+        titulo = f"Regressao Linear: {y} vs. {x}"
 
-    Nao altera a figura original -- retorna uma nova figura.
-    """
+    desc_x = DESCRICOES.get(x, "Descricao nao encontrada")
+    desc_y = DESCRICOES.get(y, "Descricao nao encontrada")
+
+    fig = px.scatter(
+        df, x=x, y=y,
+        trendline="ols",
+        title=titulo,
+        color_discrete_sequence=[cor_pontos],
+    )
+
+    # trace 0 = pontos, trace 1 = linha de tendencia
+    fig.data[0].update(
+        hovertemplate=(
+            f"<b>{x}</b>: %{{x}}<br>"
+            f"<span style='font-size:11px'>{desc_x}</span><br><br>"
+            f"<b>{y}</b>: %{{y}}<br>"
+            f"<span style='font-size:11px'>{desc_y}</span>"
+            "<extra></extra>"
+        )
+    )
+
+    if len(fig.data) > 1:
+        fig.data[1].update(hovertemplate="Linha de tendencia (OLS)<extra></extra>")
+
+    fig.update_layout(width=650, height=550)
+
+    return fig
+
+
+def aplicar_estilo_sobrio(fig):
     fig_sobria = copy.deepcopy(fig)
 
     fig_sobria.update_layout(
