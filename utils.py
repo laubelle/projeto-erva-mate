@@ -2,7 +2,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from ipywidgets import Button, Output, VBox, HBox, HTML
-from IPython.display import display, FileLink
+from IPython.display import display
 import copy
 
 
@@ -41,7 +41,6 @@ DESCRICOES = {
 }
 
 
-
 def interpretar_correlacao(r: float) -> str:
     if r == 1:
         return "mesma variavel"
@@ -56,7 +55,6 @@ def interpretar_correlacao(r: float) -> str:
 
     direcao = "positiva" if r > 0 else "negativa"
     return f"correlacao {forca} e {direcao}"
-
 
 
 def plot_correlation_heatmap(df, colunas=None, titulo="Matriz de Correlacao de Pearson",
@@ -106,40 +104,11 @@ def plot_correlation_heatmap(df, colunas=None, titulo="Matriz de Correlacao de P
     return fig
 
 
-def plot_regressao(df, x, y, titulo=None, cor_pontos="#1f77b4"):
-    if titulo is None:
-        titulo = f"Regressao Linear: {y} vs. {x}"
+def aplicar_estilo_sobrio(fig, remover_titulo=True):
+    """Aplica formatacao no padrao ABNT: fonte serifada, fundo branco,
+    eixos emoldurados sem malha e titulo fora da figura (vai na celula
+    markdown como 'Figura N - descricao' + 'Fonte: ...')."""
 
-    desc_x = DESCRICOES.get(x, "Descricao nao encontrada")
-    desc_y = DESCRICOES.get(y, "Descricao nao encontrada")
-
-    fig = px.scatter(
-        df, x=x, y=y,
-        trendline="ols",
-        title=titulo,
-        color_discrete_sequence=[cor_pontos],
-    )
-
-    # trace 0 = pontos, trace 1 = linha de tendencia
-    fig.data[0].update(
-        hovertemplate=(
-            f"<b>{x}</b>: %{{x}}<br>"
-            f"<span style='font-size:11px'>{desc_x}</span><br><br>"
-            f"<b>{y}</b>: %{{y}}<br>"
-            f"<span style='font-size:11px'>{desc_y}</span>"
-            "<extra></extra>"
-        )
-    )
-
-    if len(fig.data) > 1:
-        fig.data[1].update(hovertemplate="Linha de tendencia (OLS)<extra></extra>")
-
-    fig.update_layout(width=650, height=550)
-
-    return fig
-
-
-def aplicar_estilo_sobrio(fig):
     fig_sobria = copy.deepcopy(fig)
 
     fig_sobria.update_layout(
@@ -156,14 +125,19 @@ def aplicar_estilo_sobrio(fig):
         margin=dict(l=80, r=40, t=60, b=80),
     )
 
+    if remover_titulo:
+        fig_sobria.update_layout(title=None)
+
     fig_sobria.update_coloraxes(colorscale="RdBu_r")
 
     fig_sobria.update_xaxes(
         showline=True, linewidth=1, linecolor="black", mirror=True,
+        showgrid=False,
         tickfont=dict(family="Times New Roman, Times, serif", size=12),
     )
     fig_sobria.update_yaxes(
         showline=True, linewidth=1, linecolor="black", mirror=True,
+        showgrid=False,
         tickfont=dict(family="Times New Roman, Times, serif", size=12),
     )
 
